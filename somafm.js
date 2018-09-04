@@ -34,27 +34,28 @@
 
     plugin.addURI(PREFIX+"channel:(.*)url:(.*)", function(page, name,url) {
         var videoParams = {
-        title: name,
-        canonicalUrl: PREFIX + 'video:' + name,
-        sources: [{
-            url: url,
-            mimetype: "xx",
-        }],
-        no_subtitle_scan: true,
-        subtitles: []
+            title: name,
+            canonicalUrl: PREFIX + 'video:' + name,
+            sources: [{
+                url: url,
+                mimetype: "xx",
+            }],
+            no_subtitle_scan: true,
+            subtitles: []
         }
         page.source = 'audioparams:' + JSON.stringify(videoParams);
-    }); 
+    });
     // Start page
     plugin.addURI(PREFIX+"BrowsebyArtist", function(page) {
-	page.type = "directory";
-	page.metadata.title = plugin.getDescriptor().title;
-	page.metadata.logo = logo;
+        page.type = "directory";
+        page.metadata.title = plugin.getDescriptor().title;
+        page.metadata.logo = logo;
         page.loading = true;
+        var total = 0;
 
         if (showtime.currentVersionInt < 49900000) {
-   	    page.metadata.glwview = plugin.path + 'views/array.view';
-	    page.contents = 'items';
+            page.metadata.glwview = plugin.path + 'views/array.view';
+            page.contents = 'items';
             page.options.createInt('childTilesX', 'Tiles by X', 6, 1, 10, 1, '', function(v) {
                 page.metadata.childTilesX = v;
             }, true);
@@ -67,7 +68,7 @@
                 page.metadata.informationBar = v;
             }, true);
         } else
-    	    page.model.contents = 'grid';
+            page.model.contents = 'grid';
 
         var doc = showtime.httpReq(BASE_URL + "/listen").toString();
 
@@ -75,23 +76,25 @@
         var re = /<!-- Channel: (.*) Listeners: (.*) -->[\S\s]*?<img src="([\S\s]*?)"[\S\s]*?<h3>([\S\s]*?)<\/h3>([\S\s]*?)<\/li>/g;
         var match = re.exec(doc);
         while (match) {
-	    page.appendItem(PREFIX + "channel:" + match[4] + "url:" + "http://ice1.somafm.com/" + match[1] + "-128-mp3", 'video', {
-	        station: match[4],
-	        title: match[4],
-	        description: descr(match[5]),
-	        icon: BASE_URL + match[3],
-	        listeners: match[2]
-	    });
+            total++;
+            page.appendItem(PREFIX + "channel:" + match[4] + "url:" + "http://ice1.somafm.com/" + match[1] + "-128-mp3", 'video', {
+                station: match[4],
+                title: match[4],
+                description: descr(match[5]),
+                icon: BASE_URL + match[3],
+                listeners: match[2],
+                extra_data:"total:" + total
+            });
             match = re.exec(doc);
         };
-	page.loading = false;
+        page.loading = false;
     });
 
     plugin.addURI(PREFIX+"ppp", function(page) {
-    page.appendItem(PREFIX + 'BrowsebyArtist', 'directory',{title: "Browse by Artist" });
-    }); 
+        page.appendItem(PREFIX + 'BrowsebyArtist', 'directory',{title: "Browse by Artist" });
+    });
 
     plugin.addURI(plugin.getDescriptor().id + ':start', function(page) {
-    page.appendItem(PREFIX + 'ppp', 'directory',{title: "ppp" });
+        page.appendItem(PREFIX + 'ppp', 'directory',{title: "ppp" });
     });
 })(this);
